@@ -15,8 +15,10 @@ module cla_tb();
   
   initial begin
     ain = 4;bin = 7;cin = 1;#5;
+    if(s==(ain+bin+cin)) $write("pass");else $write("fail");
     ain = 5;bin = 2;cin = 0;#5;
+    if(s==(ain+bin+cin)) $write("pass");else $write("fail");
     ain = 8;bin = 5;cin = 1;#5;
-    #60$finish;
+    if(s==(ain+bin+cin)) $write("pass");else $write("fail");
   end
 endmodule
