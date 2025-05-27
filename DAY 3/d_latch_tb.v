@@ -1,0 +1,28 @@
+//D latch....
+
+module d_latch_tb();
+  reg d,clk;
+  wire q,qb;
+  initial begin 
+    clk = 0; 
+  end
+  
+  d_latch dut(.d(d),.q(q),.qb(qb),.clk(clk));
+  
+  always begin
+    #5clk = ~clk;
+  end
+  
+  initial begin
+    $dumpfile("dump.vcd");
+    $dumpvars;
+    $monitor("clk=%b D=%b Q=%b Qb=%b",clk,d,q,qb);
+  end
+  
+  initial begin
+    
+    d=1;#10
+    d=0;#10
+    $finish;
+  end
+endmodule
