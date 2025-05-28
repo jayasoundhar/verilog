@@ -1,13 +1,13 @@
-// SR latch....
+// SR ff....
 
-module sr_latch_tb();
+module sr_ff_tb();
   reg s,r,clk;
   wire q,qb;
   initial begin 
     clk = 0; 
   end
   
-  sr_latch dut(.s(s),.r(r),.q(q),.qb(qb),.clk(clk));
+  sr_ff dut(.s(s),.r(r),.q(q),.qb(qb),.clk(clk));
   
   always begin
     #5clk = ~clk;
