@@ -1,5 +1,5 @@
-//jk latch......
-module jk_latch(output reg q,qb,input j,k,clk);
+//jk ff......
+module jk_ff(output reg q,qb,input j,k,clk);
   always@(posedge clk)begin
  
     case({j,k})
