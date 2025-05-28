@@ -1,6 +1,6 @@
-// SR latch...
-module sr_latch(output reg q,qb,input s,r,en);
-  always@(posedge en)begin
+// SR ff...
+module sr_ff(output reg q,qb,input s,r,clk);
+  always@(posedge clk)begin
  
     case({s,r})
       2'b00 : q=q;
