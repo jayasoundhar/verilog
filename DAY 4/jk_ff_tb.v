@@ -1,13 +1,13 @@
-// jk latch....
+// jk ff....
 
-module jk_latch_tb();
+module jk_ff_tb();
   reg j,k,clk;
   wire q,qb;
   initial begin 
     clk = 0; 
   end
   
-  jk_latch dut(.j(j),.k(k),.q(q),.qb(qb),.clk(clk));
+  jk_ff dut(.j(j),.k(k),.q(q),.qb(qb),.clk(clk));
   
   always begin
     #5clk = ~clk;
