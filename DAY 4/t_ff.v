@@ -1,5 +1,5 @@
-//T latch......
-module t_latch(output reg q,qb,input t,clk);
+//T ff......
+module t_ff(output reg q,qb,input t,clk);
   initial q=0;
   always@(posedge clk)begin
  
