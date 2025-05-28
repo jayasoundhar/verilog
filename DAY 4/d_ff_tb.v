@@ -1,13 +1,13 @@
 //D latch....
 
-module d_latch_tb();
+module d_ff_tb();
   reg d,clk;
   wire q,qb;
   initial begin 
     clk = 0; 
   end
   
-  d_latch dut(.d(d),.q(q),.qb(qb),.clk(clk));
+  d_ff dut(.d(d),.q(q),.qb(qb),.clk(clk));
   
   always begin
     #5clk = ~clk;
