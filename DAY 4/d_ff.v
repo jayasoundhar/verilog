@@ -1,5 +1,5 @@
-//D latch......
-module d_latch(output reg q,qb,input d,clk);
+//D ff......
+module d_ff(output reg q,qb,input d,clk);
   always@(posedge clk)begin
  
     case(d)
