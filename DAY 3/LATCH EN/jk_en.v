@@ -1,7 +1,7 @@
 //jk latch......
 module jk_latch(output reg q,qb,input j,k,en);
   always@(*)begin
- 
+    if(en) begin
     case({j,k})
       2'b00 : q=q;
       2'b01 : q=0;
@@ -9,5 +9,6 @@ module jk_latch(output reg q,qb,input j,k,en);
       2'b11 : q=~q;
     endcase
        qb = ~q;
+  end
   end
 endmodule
