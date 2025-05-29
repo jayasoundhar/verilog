@@ -1,5 +1,5 @@
-// up-Counter
-module up_counter(output reg [2:0]out,input rst,clk,s);
+// up-down-Counter
+module up_down_counter(output reg [2:0]out,input rst,clk,s);
   initial out = 3'bxxx;
   always@(posedge clk) begin
     if (rst) begin
