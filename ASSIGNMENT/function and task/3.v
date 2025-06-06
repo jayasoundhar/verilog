@@ -1,12 +1,9 @@
-// Code your design here
-
-module add(output sum,input a,b);
+module add(output reg sum,input a,b);
   task adder(input a,b,output sum);begin
     sum = a+b;
     end
 endtask
-  
-  adder(sum,a,b);
-  
+  always@(*) begin
+    adder(a,b,sum);
+  end
 endmodule
-  
