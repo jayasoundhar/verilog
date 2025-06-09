@@ -1,3 +1,5 @@
+// Code your design here
+// Code your design here
 module sq_menol(output out,input in,clk,rst);
 parameter a = 4'd1;
 parameter b = 4'd2;
@@ -20,5 +22,5 @@ d : nx_st = in ? b : a;
 default : nx_st = a;
 endcase
 end
-assign out = (st==d) && (in==0);
+  assign out = (st==d) && (in==0);
 endmodule
