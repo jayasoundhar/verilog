@@ -1,9 +1,11 @@
+// Code your testbench here
+// or browse Examples
 module uart_tb();
-  reg start,stop,clk,rst;
+  reg st,clk,rst;
   reg [7:0] data;
-  wire done,out;
+  wire done_t,done_r,out,error;
   
-  uart dut(.start(start),.stop(stop),.out(out),.data(data),.done(done),.clk(clk),.rst(rst));
+  uart_transmitter dut(.st(st),.out(out),.data(data),.done_r(done_r),.clk(clk),.rst(rst),.done_t(done_t),.error(error));
   
   initial begin clk = 1;rst = 1; end
   
@@ -12,12 +14,10 @@ module uart_tb();
   initial begin
     $dumpfile("dump.vcd");
     $dumpvars;
-    $monitor("clk =%b  rst =%b  start =%b  stop =%b  data =%b  out =%b  done =%b",clk,rst,start,stop,data,out,done);
   end
   
   initial begin
-    #100rst =0;
-    start =0;data =8'b01011101;stop =1;
-    #10rst=1;
+   #5 rst = 0;st = 0;data = 8'b11011100;
+    #250 $finish;
   end
 endmodule
