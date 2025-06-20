@@ -1,128 +1,169 @@
-module uart_transmitter (
-  input clk,rst,st,
-  input [7:0] data,
-  output reg out,
-  output reg done_t,
-  output reg done_r,
-  output reg error
+// top module..........
+module top_module(
+  input clk,rst,
+  output reg baud_clk,
+  input [7:0]data,
+  output reg tx,done_t,
+  output reg done_r,error
 );
-  parameter ideal = 2'b00,start = 2'b01,parity = 2'b10,stop = 2'b11;
-  reg [1:0] ps,ns;
-
-  integer count;
-  reg [10:0] storage;
-  reg par;
-  // to display transmitted data.......
-  // initial #30$display("transmitted => %b",data);
-  always @(posedge clk or negedge rst ) begin
-    if (rst) begin
-      ps <= ideal;
-      count <= 0;
-      storage <= 11'd0;
-      out <= 1'b1;
-    end 
-    else 
-      ps <= ns;
-  end
-  always@(posedge clk) begin
-    case(ps)
-      ideal : begin if(!st) begin 
-        ns <= start;
-      end 
-      else ns <= ideal;
-      end
-      
-      start : begin 
-        if(data) ns <= parity; else ns <= start;
-      end
-      parity : begin 
-        par <= ^data;//even parity generator....
-        storage <= {1'b1,par,data,st};
-        ns <= stop;
-      end
-      stop : begin
-        if(count < 11) begin
-          out <= storage[0];
-          storage <= storage >> 1;
-          count <= count + 1;
-        end
-        else begin 
-          done_t <= 1'b1;
-          ns <= ideal;
-      end
-      end
-      default : ns <= ideal;
-    endcase
-  end
-      uart_reciver test(.clk(clk),.rst(rst),.data_in(out),.done_r(done_r),.error(error));
-
+  baud_rate baud(.clk(clk),.rst(rst),.baud_clk(baud_clk));
+  
+  wire baud_tclk;
+  assign baud_tclk = baud_clk;
+  
+  transmitter trans(.clk(clk),.rst(rst),.data(data),.baud_tclk(baud_tclk),.tx(tx),.done_t(done_t));
+  
+  wire rx;
+  assign rx = tx;
+  reciver res(.clk(clk),.rst(rst),.baud_rclk(baud_tclk),.rx(rx),.done_r(done_r),.error(error));
 endmodule
-module uart_reciver (
-  input clk,rst,data_in,
-  output reg done_r,output reg error
+///////baud tick generation......
+module baud_rate(
+  input clk,rst,
+  output reg baud_clk
+);
+  parameter integer baud_rate = 921600;
+  parameter integer fqr = 50000000;
+  integer count;
+  parameter integer clk_div = fqr / baud_rate;
+  
+  always@(posedge clk ) begin
+    if(rst) begin
+      count <= 0;
+      baud_clk <= 0;
+    end
+    else begin
+      if(count == clk_div) begin
+      count <= 0;
+      baud_clk <= 1;
+    end
+    else begin
+      count =count + 1;
+      baud_clk <= 0;
+    end
+    end
+  end
+endmodule
+////////transmitter.......................
+module transmitter(
+  input clk,baud_tclk,rst,
+  input [7:0]data,
+  output reg tx,done_t
 );
   
-  parameter ideal = 2'b00,start = 2'b01,parity = 2'b10,stop = 2'b11;
-  reg [1:0] ps,ns;
-
+  
+  reg [1:0]ps,ns;
   reg [3:0]count;
-  reg [10:0] storage;
-  reg [7:0] data;
-  reg par;
-
-  always @(posedge clk or negedge rst ) begin
-    if (rst) begin
-      ps <= ideal;
-      count <= 4'd11;
-      storage <= 11'd0;
-    end 
-    else 
-      ps <= ns;
-  end
+  reg st = 1'b0;
+  
+  parameter idle = 2'b00, start = 2'b01, parity = 2'b10, stop = 2'b11;
+  
+  
   always@(posedge clk) begin
+    if(rst) begin
+      ps <= idle;
+      ns <= idle;
+      tx <= 1'b1;
+      count <= 4'd0;
+      done_t <= 1'b0;
+    end
+    else begin
+      ps <= ns;
+    end
+  end
+  
+  always@(posedge baud_tclk) begin
     case(ps)
-      ideal : begin 
-        if(!data_in) begin
-        storage[0] <= data_in;
-        storage <= storage << 1; 
-        count <= count - 1;
-        ns <= start;
-      end 
-      else ns <= ideal;
-      end
-      
-      start : begin 
-        if(count > 0) begin	
-          storage <= {data_in,storage[10:1]};
-          count <= count - 1;
+      idle : begin 
+        if(!st) begin 
+          tx <= 1'b0;
+          ns <= start;
+          st <= 1'b1;
         end
+        else ns <= idle;
+      end
+      start : begin
+        if (count <= 7) begin
+          tx <= data[count];
+          count = count + 1'b1;
+        end 
         else begin
-          data <= storage[9:1];
+          count <= 0;
           ns <= parity;
+        end
       end
-      end
-      parity : begin 
-        par <= ^data;//even parity...
+      parity : begin
+        tx <= ^data;
         ns <= stop;
       end
       stop : begin
-        if(par == 0) begin //parity checker...
-          error <= 1'b0;
-          done_r <= 1'b1;
-          ns <= ideal;
-        end
-        else begin
-          error <= 1'b0;
-          done_r <= 1'b1;
-          ns <= ideal;
+        tx <= 1'b1;
+        done_t <= 1'b1;
+        ns <= idle;
+      end
+    endcase
+  end
+  
+endmodule
+
+///////////////receiver.............................
+module reciver(
+  input clk,rst,baud_rclk,rx,
+  output reg done_r,error
+);
+  
+  
+  reg [1:0]ps,ns;
+  reg [3:0]count;
+  reg [7:0]data;
+  
+  parameter idle = 2'b00, start = 2'b01, parity = 2'b10;
+  
+  
+  always@(posedge clk) begin
+    if(rst) begin
+      ps <= idle;
+      ns <= idle;
+      count <= 4'd0;
+      done_r <= 1'b0;
+      data <= 8'd0;
+    end
+    else begin
+      ps <= ns;
+    end
+  end
+  
+  always@(posedge baud_rclk) begin
+    case(ps)
+      idle : begin 
+        if(!rx) begin
+          ns <= start;
         end
       end
-      default : ns <= ideal;
-      
+      start : begin
+        if(count <= 7) begin
+          data[count] <= rx;
+          count <= count + 1'b1;
+        end
+        else begin
+          ns <= parity;
+          count <= 4'd0;
+        end
+      end
+      parity : begin
+        if(^data == 1'b0) begin 
+          done_r <= 1'b1;
+          error <= 0;
+          ns <= idle;
+        end
+        else begin
+          error <= 1'b1;
+          ns <= idle;
+        end
+      end
+      default ns <= idle;
     endcase
-          
   end
-  // to check the recived value...
-  // initial #200$display("recived => %b",data);
-
+  
+  
 endmodule
