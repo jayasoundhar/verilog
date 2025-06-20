@@ -1,23 +1,32 @@
 // Code your testbench here
 // or browse Examples
-module uart_tb();
-  reg st,clk,rst;
-  reg [7:0] data;
-  wire done_t,done_r,out,error;
+module tb();
   
-  uart_transmitter dut(.st(st),.out(out),.data(data),.done_r(done_r),.clk(clk),.rst(rst),.done_t(done_t),.error(error));
+  reg clk,rst;
+  reg [7:0]data;
   
-  initial begin clk = 1;rst = 1; end
+  wire baud_clk,tx,done_t,done_r,error;
+
+  
+  initial clk = 1;
+  
+  top_module dut (.clk(clk),.rst(rst),.baud_clk(baud_clk),.data(data),.tx(tx),.done_t(done_t),.done_r(done_r),.error(error));
   
   always #5clk = ~clk;
-  
   initial begin
+    
     $dumpfile("dump.vcd");
-    $dumpvars;
+    $dumpvars();
   end
   
   initial begin
-   #5 rst = 0;st = 0;data = 8'b11011100;
-    #250 $finish;
+    #10 rst = 1;
+    #20 rst = 0;
+    #10 data = 8'b10010101;
+
+    #100000;
+    
+    $finish;
   end
+  
 endmodule
