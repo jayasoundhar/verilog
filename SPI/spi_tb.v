@@ -1,43 +1,65 @@
-module tb;
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 26.06.2025 10:26:45
+// Design Name: 
+// Module Name: spi_tb
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 
-  reg clk, rst;
-  reg s0, s1, s2, s3;
 
+module spi_tb;
+
+  reg clk;
+  reg rst;
+  reg s0, s1;
+  // Instantiate the DUT
   spi_master uut (
     .clk(clk),
     .rst(rst),
     .s0(s0),
-    .s1(s1),
-    .s2(s2),
-    .s3(s3)
+    .s1(s1)
   );
 
+  // Generate 100 MHz clock (10 ns period)
+  always #5 clk = ~clk;
+
   initial begin
+    // Initialize inputs
     clk = 0;
-    forever #5 clk = ~clk;  // 10ns clock period
-  end
-
-  initial begin
-    $dumpfile("spi.vcd");
-    $dumpvars(0, tb);
-
-    // Initial values
     rst = 1;
     s0 = 1;
     s1 = 1;
-    s2 = 1;
-    s3 = 1;
-
-    #12 rst = 0;
-
-    // Select slave 2
-    #10 s2 = 0;
-
-    // Wait for transfer
-    #150;
-
-    // Done
+    #20rst = 0;
+    #40$display("Starting transaction with slave 0...");
+    s0 = 0;
+    #900;
+    s0 = 1;
+    #100;
+    $display("Starting transaction with slave 1...");
+    s1 = 0;
+    #1000;
+    s1 = 1;
     $finish;
   end
+  initial begin
+  $monitor("Time=%0t | s0=%b s1=%b | master_out=%b | master_in=%b", $time, s0, s1, uut.master_out, uut.master_in);
+    $dumpfile("dump.vcd");
+    $dumpvars;
+end
+
 
 endmodule
+
