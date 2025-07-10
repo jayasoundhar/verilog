@@ -151,7 +151,7 @@ module reciver(
         end
       end
       parity : begin
-        if(^data == 1'b0) begin 
+        if((^data^rx) == 1'b0) begin 
           done_r <= 1'b1;
           error <= 0;
           ns <= idle;
