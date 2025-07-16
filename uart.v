@@ -1,52 +1,78 @@
-// top module..........
+/////////////////////////////////TOP MODULE///////////////////////////////////////////////////////////////////////
 module top_module(
-  input clk,rst,
-  output reg baud_clk,
+  input clk1,clk2,rst,
+  output reg baud_clk_T,baud_clk_R,
   input [7:0]data,
   output reg tx,done_t,
   output reg done_r,error
 );
-  baud_rate baud(.clk(clk),.rst(rst),.baud_clk(baud_clk));
-  
-  wire baud_tclk;
-  assign baud_tclk = baud_clk;
-  
-  transmitter trans(.clk(clk),.rst(rst),.data(data),.baud_tclk(baud_tclk),.tx(tx),.done_t(done_t));
+  baud_rate_T baudt(.clk1(clk1),.rst(rst),.baud_clk_T(baud_clk_T));
+  baud_rate_R baudr(.clk2(clk2),.rst(rst),.baud_clk_R(baud_clk_R));
+ 
+  transmitter trans(.clk1(clk1),.rst(rst),.data(data),.baud_tclk(baud_clk_T),.tx(tx),.done_t(done_t));
   
   wire rx;
   assign rx = tx;
-  reciver res(.clk(clk),.rst(rst),.baud_rclk(baud_tclk),.rx(rx),.done_r(done_r),.error(error));
+  receiver res(.clk2(clk2),.rst(rst),.baud_rclk(baud_clk_R),.rx(rx),.done_r(done_r),.error(error));
 endmodule
-///////baud tick generation......
-module baud_rate(
-  input clk,rst,
-  output reg baud_clk
+
+module baud_rate_T(
+  input clk1,rst,
+  output reg baud_clk_T
 );
   parameter integer baud_rate = 921600;
   parameter integer fqr = 50000000;
   integer count;
   parameter integer clk_div = fqr / baud_rate;
   
-  always@(posedge clk ) begin
+  always@(posedge clk1 ) begin
     if(rst) begin
       count <= 0;
-      baud_clk <= 0;
+      baud_clk_T <= 0;
     end
     else begin
       if(count == clk_div) begin
       count <= 0;
-      baud_clk <= 1;
+      baud_clk_T <= 1;
     end
     else begin
       count =count + 1;
-      baud_clk <= 0;
+      baud_clk_T <= 0;
     end
     end
   end
 endmodule
-////////transmitter.......................
+
+module baud_rate_R(
+  input clk2,rst,
+  output reg baud_clk_R
+);
+  parameter integer baud_rate = 921600;
+  parameter integer fqr = 40000000;
+  integer count;
+  parameter integer clk_div = fqr / baud_rate;
+  
+  always@(posedge clk2 ) begin
+    if(rst) begin
+      count <= 0;
+      baud_clk_R <= 0;
+    end
+    else begin
+      if(count == clk_div) begin
+      count <= 0;
+      baud_clk_R <= 1;
+    end
+    else begin
+      count =count + 1;
+      baud_clk_R <= 0;
+    end
+    end
+  end
+endmodule
+
+//////////////////////////TRANSMITTER/////////////////////////////////////////////
 module transmitter(
-  input clk,baud_tclk,rst,
+  input clk1,baud_tclk,rst,
   input [7:0]data,
   output reg tx,done_t
 );
@@ -59,7 +85,7 @@ module transmitter(
   parameter idle = 2'b00, start = 2'b01, parity = 2'b10, stop = 2'b11;
   
   
-  always@(posedge clk) begin
+  always@(posedge clk1) begin
     if(rst) begin
       ps <= idle;
       ns <= idle;
@@ -106,9 +132,9 @@ module transmitter(
   
 endmodule
 
-///////////////receiver.............................
-module reciver(
-  input clk,rst,baud_rclk,rx,
+/////////////////////RECEIVER/////////////////////////////////////
+module receiver(
+  input clk2,rst,baud_rclk,rx,
   output reg done_r,error
 );
   
@@ -120,7 +146,7 @@ module reciver(
   parameter idle = 2'b00, start = 2'b01, parity = 2'b10;
   
   
-  always@(posedge clk) begin
+  always@(posedge clk2) begin
     if(rst) begin
       ps <= idle;
       ns <= idle;
@@ -139,19 +165,19 @@ module reciver(
         if(!rx) begin
           ns <= start;
         end
+        else ns <= idle;
       end
       start : begin
-        if(count <= 7) begin
+        if(count <= 8) begin
           data[count] <= rx;
           count <= count + 1'b1;
         end
         else begin
           ns <= parity;
-          count <= 4'd0;
         end
       end
       parity : begin
-        if((^data^rx) == 1'b0) begin 
+        if(((^data)^ rx) == 1'b0) begin 
           done_r <= 1'b1;
           error <= 0;
           ns <= idle;
@@ -164,6 +190,4 @@ module reciver(
       default ns <= idle;
     endcase
   end
-  
-  
 endmodule
