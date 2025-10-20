@@ -1,6 +1,6 @@
 //D latch....
 
-module d_latch_tb1();
+module d_latch_tb();
   reg d;
   wire q,qb;
   
